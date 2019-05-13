@@ -3,6 +3,18 @@ from pathlib import Path
 import json
 import time
 import sys
+import os
+
+def period2str(period):
+   return '%02d:%02d:%02d' % ( period // 3600, period % 3600 // 60, period % 60)
+
+def print_usage():
+    print('''Usage: timee
+  | timee <name>
+  | timee start <name>
+  | timee stop <name>
+  | timee clear <name>
+''')
 
 # load data
 data_path = Path.home() / '.timeedata'
@@ -14,49 +26,62 @@ elif (data_path.exists()):
     print("Please remove " + str(data_path))
     sys.exit(-1)
 
-print(data)
 if 'version' not in data:
     data['version'] = 1
     data['record'] = {}
     data['started'] = {}
 
-if len(sys.argv) <= 1:
-    print("Usage: timee <name> | time start <name> | time end <name")
-    exit(-1)
-
-if sys.argv[1] == 'start':
-    if len(sys.argv) != 3:
-        print("Usage: timee <name> | time start <name> | time end <name")
-        exit(-1)
-    data['started'][sys.argv[2]] = int(time.time())
-elif sys.argv[1] == 'end': 
-    if len(sys.argv) != 3:
-        print("Usage: timee <name> | time start <name> | time end <name")
-        exit(-1)
-    if sys.argv[2] in data['started']:
-        start_time = data['started'][sys.argv[2]]
-        end_time = int(time.time())
-        record = 0
-        if sys.argv[2] in data['record']:
-            record = data['record'][sys.argv[2]]
-        print('Elapsed %d' % int(end_time - start_time))
-        record = record + int(end_time - start_time)
-        print('Total elapsed %02d:%02d:%02d' % ( record // 3600, record % 3600 // 60, record % 60))
-        data['started'].pop(sys.argv[2])
-        data['record'][sys.argv[2]] = record
+if len(sys.argv) == 1:
+    print('Started:')
+    for k,v in data['started'].items():
+        print('%s: Elapsed %s' % (k, period2str(int(time.time() - v))))
+    print()
+    print('Recorded:')
+    for k,v in data['record'].items():
+        print('%s: Elapsed %s' % (k, period2str(v)))
 else:
-    record = 0
-    if sys.argv[1] in data['record']:
-        record = data['record'][sys.argv[1]]
-    start_time = time.time()
-    input('Timing...')
-    end_time = time.time()
-    print('Elapsed %d' % int(end_time - start_time))
-    record = record + int(end_time - start_time)
-    print('Total elapsed %02d:%02d:%02d' % ( record // 3600, record % 3600 // 60, record % 60))
-    data['record'][sys.argv[1]] = record
+    if sys.argv[1] == 'start':
+        if len(sys.argv) != 3:
+            print_usage()
+            exit(-1)
+        data['started'][sys.argv[2]] = int(time.time())
+    elif sys.argv[1] == 'stop': 
+        if len(sys.argv) != 3:
+            print_usage()
+            exit(-1)
+        if sys.argv[2] in data['started']:
+            start_time = data['started'][sys.argv[2]]
+            end_time = int(time.time())
+            record = 0
+            if sys.argv[2] in data['record']:
+                record = data['record'][sys.argv[2]]
+            print('Elapsed %s' % period2str(int(end_time - start_time)))
+            record = record + int(end_time - start_time)
+            print('Total elapsed %s' % period2str(record))
+            data['started'].pop(sys.argv[2])
+            data['record'][sys.argv[2]] = record
+    elif sys.argv[1] == 'edit':
+        os.system('vi ' + str(data_path))
+        exit(0)
+    elif sys.argv[1] == 'clear':
+        if len(sys.argv) != 3:
+            print_usage()
+            exit(-1)
+        data['started'].pop(sys.argv[2], None)
+        data['record'].pop(sys.argv[2], None)
+    else:
+        record = 0
+        if sys.argv[1] in data['record']:
+            record = data['record'][sys.argv[1]]
+        start_time = time.time()
+        input('Timing...')
+        end_time = time.time()
+        print('Elapsed %s' % period2str(int(end_time - start_time)))
+        record = record + int(end_time - start_time)
+        print('Total elapsed %s' % period2str(record))
+        data['record'][sys.argv[1]] = record
 
 # save data
 with open(data_path, 'w') as outfile:
-    json.dump(data, outfile)
+    json.dump(data, outfile, indent=4)
 

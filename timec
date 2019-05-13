@@ -4,9 +4,7 @@ import json
 import time
 import sys
 import os
-
-def period2str(period):
-   return '%02d:%02d:%02d' % ( period // 3600, period % 3600 // 60, period % 60)
+import signal
 
 def print_usage():
     print('''Usage: timec <name> <time>''') 
@@ -16,6 +14,10 @@ if len(sys.argv) != 3:
    exit(-1)
 
 os.system('timee start ' + sys.argv[1])
+def exit_early(sig, frame):
+   os.system('timee stop ' + sys.argv[1])
+   sys.exit(0)
+signal.signal(signal.SIGINT, exit_early)
 time.sleep(int(sys.argv[2]))
 print("\07")
 os.system('timee stop ' + sys.argv[1])

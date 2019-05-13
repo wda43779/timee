@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import json
+import time
+import sys
+
+# load data
+data_path = Path.home() / '.timeedata'
+data = {}
+if (data_path.is_file()):
+    with open(data_path) as json_data:
+        data = json.load(json_data)
+elif (data_path.exists()):
+    print("Please remove " + str(data_path))
+    sys.exit(-1)
+
+print(data)
+if 'version' not in data:
+    data['version'] = 1
+    data['record'] = {}
+    data['started'] = {}
+
+if len(sys.argv) <= 1:
+    print("Usage: timee <name> | time start <name> | time end <name")
+    exit(-1)
+
+if sys.argv[1] == 'start':
+    if len(sys.argv) != 3:
+        print("Usage: timee <name> | time start <name> | time end <name")
+        exit(-1)
+    data['started'][sys.argv[2]] = int(time.time())
+elif sys.argv[1] == 'end': 
+    if len(sys.argv) != 3:
+        print("Usage: timee <name> | time start <name> | time end <name")
+        exit(-1)
+    if sys.argv[2] in data['started']:
+        start_time = data['started'][sys.argv[2]]
+        end_time = int(time.time())
+        record = 0
+        if sys.argv[2] in data['record']:
+            record = data['record'][sys.argv[2]]
+        print('Elapsed %d' % int(end_time - start_time))
+        record = record + int(end_time - start_time)
+        print('Total elapsed %02d:%02d:%02d' % ( record // 3600, record % 3600 // 60, record % 60))
+        data['started'].pop(sys.argv[2])
+        data['record'][sys.argv[2]] = record
+else:
+    record = 0
+    if sys.argv[1] in data['record']:
+        record = data['record'][sys.argv[1]]
+    start_time = time.time()
+    input('Timing...')
+    end_time = time.time()
+    print('Elapsed %d' % int(end_time - start_time))
+    record = record + int(end_time - start_time)
+    print('Total elapsed %02d:%02d:%02d' % ( record // 3600, record % 3600 // 60, record % 60))
+    data['record'][sys.argv[1]] = record
+
+# save data
+with open(data_path, 'w') as outfile:
+    json.dump(data, outfile)
+

@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import json
+import time
+import sys
+import os
+
+def period2str(period):
+   return '%02d:%02d:%02d' % ( period // 3600, period % 3600 // 60, period % 60)
+
+def print_usage():
+    print('''Usage: timec <name> <time>''') 
+
+if len(sys.argv) != 3:
+   print_usage()
+   exit(-1)
+
+os.system('timee start ' + sys.argv[1])
+time.sleep(int(sys.argv[2]))
+print("\07")
+os.system('timee stop ' + sys.argv[1])

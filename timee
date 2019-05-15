@@ -4,6 +4,7 @@ import json
 import time
 import sys
 import os
+import asyncio
 
 def period2str(period):
    return '%02d:%02d:%02d' % ( period // 3600, period % 3600 // 60, period % 60)
@@ -15,6 +16,22 @@ def print_usage():
   | timee stop <name>
   | timee clear <name>
 ''')
+
+def print_status():
+    print('Started:')
+    for k,v in data['started'].items():
+        print('%s: Elapsed %s' % (k, period2str(int(time.time() - v))))
+    print()
+    print('Recorded:')
+    for k,v in data['record'].items():
+        print('%s: Elapsed %s' % (k, period2str(v)))
+
+async def print_status_loop():
+    while True:
+        os.system('clear')
+        print_status()
+        await asyncio.sleep(1)
+
 
 # load data
 data_path = Path.home() / '.timeedata'
@@ -32,13 +49,10 @@ if 'version' not in data:
     data['started'] = {}
 
 if len(sys.argv) == 1:
-    print('Started:')
-    for k,v in data['started'].items():
-        print('%s: Elapsed %s' % (k, period2str(int(time.time() - v))))
-    print()
-    print('Recorded:')
-    for k,v in data['record'].items():
-        print('%s: Elapsed %s' % (k, period2str(v)))
+    try:
+        asyncio.run(print_status_loop())
+    except KeyboardInterrupt:
+        print('Good bye')
 else:
     if sys.argv[1] == 'start':
         if len(sys.argv) != 3:

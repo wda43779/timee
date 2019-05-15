@@ -45,6 +45,7 @@ def print_status():
     print('Recorded:')
     for k,v in data['record'].items():
         print('%s: Elapsed %s' % (k, period2str(v)))
+    print('\n^C to exit')
 
 async def print_status_loop():
     while True:
@@ -56,7 +57,7 @@ if len(sys.argv) == 1:
     try:
         asyncio.run(print_status_loop())
     except KeyboardInterrupt:
-        print('Good bye')
+        print('\nGood bye')
 else:
     if sys.argv[1] == 'start':
         if len(sys.argv) != 3:
@@ -88,20 +89,15 @@ else:
         data['started'].pop(sys.argv[2], None)
         data['record'].pop(sys.argv[2], None)
     else:
+        record_name = sys.argv[1]
         record = 0
-        if sys.argv[1] in data['record']:
-            record = data['record'][sys.argv[1]]
+        if record_name in data['record']:
+            record = data['record'][record_name]
         start_time = time.time()
 
-        try:
-            input('Timing...')
-        except KeyboardInterrupt:
-            pass
-
-        end_time = time.time()
-        print('Elapsed %s' % period2str(int(end_time - start_time)))
-        record = record + int(end_time - start_time)
-        print('Total elapsed %s' % period2str(record))
-        data['record'][sys.argv[1]] = record
+        os.system('timee start ' + record_name)
+        os.system('timee')
+        os.system('timee stop ' + record_name)
+        exit(0)
 
 save_data()

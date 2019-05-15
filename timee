@@ -6,6 +6,26 @@ import sys
 import os
 import asyncio
 
+# load data
+data_path = Path.home() / '.timeedata'
+data = {}
+if (data_path.is_file()):
+    with open(data_path) as json_data:
+        data = json.load(json_data)
+elif (data_path.exists()):
+    print("Please remove " + str(data_path))
+    sys.exit(-1)
+
+if 'version' not in data:
+    data['version'] = 1
+    data['record'] = {}
+    data['started'] = {}
+
+def save_data():
+    with open(data_path, 'w') as outfile:
+        json.dump(data, outfile, indent=4)
+
+
 def period2str(period):
    return '%02d:%02d:%02d' % ( period // 3600, period % 3600 // 60, period % 60)
 
@@ -31,22 +51,6 @@ async def print_status_loop():
         os.system('clear')
         print_status()
         await asyncio.sleep(1)
-
-
-# load data
-data_path = Path.home() / '.timeedata'
-data = {}
-if (data_path.is_file()):
-    with open(data_path) as json_data:
-        data = json.load(json_data)
-elif (data_path.exists()):
-    print("Please remove " + str(data_path))
-    sys.exit(-1)
-
-if 'version' not in data:
-    data['version'] = 1
-    data['record'] = {}
-    data['started'] = {}
 
 if len(sys.argv) == 1:
     try:
@@ -88,14 +92,16 @@ else:
         if sys.argv[1] in data['record']:
             record = data['record'][sys.argv[1]]
         start_time = time.time()
-        input('Timing...')
+
+        try:
+            input('Timing...')
+        except KeyboardInterrupt:
+            pass
+
         end_time = time.time()
         print('Elapsed %s' % period2str(int(end_time - start_time)))
         record = record + int(end_time - start_time)
         print('Total elapsed %s' % period2str(record))
         data['record'][sys.argv[1]] = record
 
-# save data
-with open(data_path, 'w') as outfile:
-    json.dump(data, outfile, indent=4)
-
+save_data()
